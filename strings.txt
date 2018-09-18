@@ -1,0 +1,13 @@
+PLUGIN_PHISHIN
+	EN	phish.in'
+
+PLUGIN_PHISHIN_DESC
+	EN	phish.in' gives you access to Live Phish Audio Streams
+
+PLUGIN_PHISHIN_YEARS
+	EN	Years
+
+PLUGIN_PHISHIN_ERA
+	EN	%s Era
+
+	
