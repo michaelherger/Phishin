@@ -64,6 +64,11 @@ sub getShow {
 	_call("/shows/$id", $cb);
 }
 
+sub search {
+	my ($class, $query, $cb) = @_;
+	_call("/search/$query", $cb);
+}
+
 sub _call {
 	my ( $url, $cb, $params ) = @_;
 

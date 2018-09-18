@@ -25,6 +25,29 @@ sub initPlugin {
 
 	Plugins::Phishin::Metadata->init();
 
+	# Slim::Menu::GlobalSearch->registerInfoProvider( phishin => (
+	# 	func => sub {
+	# 		my ( $client, $tags ) = @_;
+
+	# 		my $searchParam = $tags->{search};
+	# 		my $passthrough = [{ q => $searchParam }];
+
+	# 		return {
+	# 			name => cstring($client, 'PLUGIN_PHISHIN'),
+	# 			type => 'link',
+	# 			# need to return a list of search items - might be a bug in GlobalSearch?
+	# 			items => [{
+	# 				url => sub {
+	# 					warn Data::Dump::dump($_[1]);
+	# 					search(@_);
+	# 				},
+	# 				passthrough => $passthrough,
+	# 				searchParam => $searchParam,
+	# 			}]
+	# 		};
+	# 	}
+	# ) );
+
 	$class->SUPER::initPlugin(
 		feed   => \&handleFeed,
 		tag    => 'phishin',
@@ -41,7 +64,7 @@ sub handleFeed {
 	my ($client, $cb, $args) = @_;
 
 	if (!$client) {
-		$cb->([{ name => string('NO_PLAYER_FOUND') }]);
+		$cb->([{ name => cstring($client, 'NO_PLAYER_FOUND') }]);
 		return;
 	}
 
@@ -49,17 +72,21 @@ sub handleFeed {
 
 	my $items = [
 		{
-			name => $client->string('PLUGIN_PHISHIN_YEARS'),
+			name => cstring($client, 'PLUGIN_PHISHIN_YEARS'),
 			type => 'link',
 			url  => \&eras,
 		},{
-			name => $client->string('PLUGIN_PHISHIN_VENUES'),
+			name => cstring($client, 'PLUGIN_PHISHIN_VENUES'),
 			type => 'link',
 			url  => \&venues,
 		},{
-			name => $client->string('PLUGIN_PHISHIN_SONGS'),
+			name => cstring($client, 'PLUGIN_PHISHIN_SONGS'),
 			type => 'link',
 			url  => \&songs,
+		},{
+			name => cstring($client, 'PLUGIN_PHISHIN_SEARCH'),
+			type => 'search',
+			url  => \&search,
 		}
 	];
 
@@ -269,6 +296,54 @@ sub show {
 				url  => $meta->{url},
 			}
 		} @{$show->{tracks}} ];
+
+		$cb->({ items => $items });
+	});
+}
+
+sub search {
+	my ($client, $cb, $params, $args) = @_;
+
+	Plugins::Phishin::API->search($params->{search} || $args->{q}, sub {
+		my ($results) = @_;
+
+		my $items = [];
+
+		if ($results->{songs}) {
+			push @$items, {
+				name => cstring($client, 'PLUGIN_PHISHIN_SONGS'),
+				type => 'outline',
+				items => [ map {
+					{
+						name => $_->{title} . ' (' . $_->{tracks_count} . ')',
+						type => 'link',
+						url => \&song,
+						passthrough => [{
+							songId => $_->{id}
+						}]
+					}
+				} @{$results->{songs}} ]
+			};
+		}
+
+		if ($results->{venues}) {
+			push @$items, {
+				name => cstring($client, 'PLUGIN_PHISHIN_VENUES'),
+				type => 'outline',
+				items => [ map {
+					{
+						name => $_->{name} . ' - ' . $_->{location},
+						line1 => $_->{name},
+						line2 => $_->{location},
+						type => 'playlist',
+						url => \&venue,
+						passthrough => [{
+							venueId => $_->{id}
+						}]
+					}
+				} @{$results->{venues}} ]
+			};
+		}
 
 		$cb->({ items => $items });
 	});
