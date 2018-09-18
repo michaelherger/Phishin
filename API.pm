@@ -21,14 +21,13 @@ my $cache = Slim::Utils::Cache->new();
 
 sub getEras {
 	my ($class, $cb) = @_;
-
 	_call('/eras', $cb);
 }
 
 sub getYear {
 	my ($class, $year, $cb) = @_;
 
-	# ???
+	# ??? - sorting doesn't work?
 	_call("/years/$year", $cb, {
 		sort_attr => 'date',
 		sort_dir => 'desc'
@@ -37,7 +36,6 @@ sub getYear {
 
 sub getShow {
 	my ($class, $id, $cb) = @_;
-
 	_call("/shows/$id", $cb);
 }
 
@@ -99,11 +97,11 @@ sub _call {
 
 						$ttl ||= 60;		# XXX - we're going to always cache for a minute, as we often do follow up calls while navigating
 
-						# if ($ttl) {
-						# 	main::INFOLOG && $log->is_info && $log->info("Caching result for $ttl using max-age (" . $response->url . ")");
-						# 	$cache->set($cache_key, $result, $ttl);
-						# 	main::INFOLOG && $log->is_info && $log->info("Data cached (" . $response->url . ")");
-						# }
+						if ($ttl) {
+							main::INFOLOG && $log->is_info && $log->info("Caching result for $ttl using max-age (" . $response->url . ")");
+							$cache->set($cache_key, $result, $ttl);
+							main::INFOLOG && $log->is_info && $log->info("Data cached (" . $response->url . ")");
+						}
 					}
 				}
 			}
@@ -113,12 +111,11 @@ sub _call {
 		sub {
 			my ($http, $error, $response) = @_;
 
-			$log->warn("error: $error");
+			$log->error("Got error from phish.in': $error");
 
 			main::INFOLOG && $log->is_info && $log->info(Data::Dump::dump($response));
 			$cb->({
-				name => 'Unknown error: ' . $error,
-				type => 'text'
+				error => 'Unexpected error: ' . $error,
 			}, $response);
 		},
 	);
