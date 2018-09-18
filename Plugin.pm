@@ -56,6 +56,10 @@ sub handleFeed {
 			name => $client->string('PLUGIN_PHISHIN_VENUES'),
 			type => 'link',
 			url  => \&venues,
+		},{
+			name => $client->string('PLUGIN_PHISHIN_SONGS'),
+			type => 'link',
+			url  => \&songs,
 		}
 	];
 
@@ -128,7 +132,7 @@ sub venues {
 
 		foreach (@$venues) {
 			next unless $_->{shows_count};
-			
+
 			my $textkey = uc(substr($_->{name} || '', 0, 1));
 
 			if ( defined $indexLetter && $indexLetter ne ($textkey || '') ) {
@@ -154,7 +158,7 @@ sub venues {
 
 		push @$indexList, [$indexLetter, $count];
 
-		$cb->({ 
+		$cb->({
 			items     => $items,
 			indexList => $indexList
 		});
@@ -178,6 +182,73 @@ sub venue {
 				}]
 			}
 		} @{$venue->{show_dates} || []} ];
+
+		$cb->({ items => $items });
+	});
+}
+
+sub songs {
+	my ($client, $cb, $params, $args) = @_;
+
+	Plugins::Phishin::API->getSongs(sub {
+		my ($songs) = @_;
+
+		my $items = [];
+
+		my $indexList = [];
+		my $indexLetter;
+		my $count = 0;
+
+		foreach (@$songs) {
+			next unless $_->{tracks_count};
+
+			my $textkey = uc(substr($_->{title} || '', 0, 1));
+
+			if ( defined $indexLetter && $indexLetter ne ($textkey || '') ) {
+				push @$indexList, [$indexLetter, $count];
+				$count = 0;
+			}
+
+			$count++;
+			$indexLetter = $textkey;
+
+			push @$items, {
+				name => $_->{title} . ' (' . $_->{tracks_count} . ')',
+				type => 'link',
+				textkey => $textkey,
+				url => \&song,
+				passthrough => [{
+					songId => $_->{id}
+				}]
+			}
+		}
+
+		push @$indexList, [$indexLetter, $count];
+
+		$cb->({
+			items     => $items,
+			indexList => $indexList
+		});
+	});
+}
+
+sub song {
+	my ($client, $cb, $params, $args) = @_;
+
+	Plugins::Phishin::API->getSong($params->{songId} || $args->{songId}, sub {
+		my ($song) = @_;
+
+		my $i = 0;
+		my $items = [ reverse map {
+			{
+				name => $_->{show_date},
+				type => 'playlist',
+				url => \&show,
+				passthrough => [{
+					showId => $_->{show_id}
+				}]
+			}
+		} @{$song->{tracks} || []} ];
 
 		$cb->({ items => $items });
 	});

@@ -44,9 +44,19 @@ sub getVenues {
 
 sub getVenue {
 	my ($class, $id, $cb) = @_;
-	_call("/venues/$id", $cb, {
-		sort_attr => 'name'
+	_call("/venues/$id", $cb);
+}
+
+sub getSongs {
+	my ($class, $cb) = @_;
+	_call('/songs', $cb, {
+		sort_attr => 'title'
 	});
+}
+
+sub getSong {
+	my ($class, $id, $cb) = @_;
+	_call("/songs/$id", $cb);
 }
 
 sub getShow {
