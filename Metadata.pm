@@ -2,10 +2,11 @@ package Plugins::Phishin::Metadata;
 
 use strict;
 
+use Tie::Cache::LRU;
+
 use Slim::Formats::RemoteMetadata;
 use Slim::Utils::Cache;
 use Slim::Utils::Log;
-# use Slim::Utils::Prefs;
 
 use Plugins::Phishin::Plugin;
 
@@ -15,6 +16,9 @@ use constant CACHE_TTL    => 30 * 86400;
 
 my $log = logger('plugin.phishin');
 my $cache = Slim::Utils::Cache->new();
+
+# In-memory cache for the most often used tracks. Should cover a full show.
+tie my %memCache, 'Tie::Cache::LRU', 50;
 
 sub init {
 	my $class = shift;
@@ -34,9 +38,22 @@ sub provider {
 sub getMetadataFor {
 	my ( $class, $url ) = @_;
 
-	my $meta = $cache->get(CACHE_PREFIX . $url) || {};
+	# read from memory cache first, we're called often by the web UI
+	my $meta = $memCache{$url};
+	
+	if (!$meta) {
+		$meta = $cache->get(CACHE_PREFIX . $url);
 
-	$meta->{image} ||= Plugins::Phishin::Plugin->_pluginDataFor('icon');
+		# if we found data in the cache, keep a copy in memory, too
+		if ($meta) {
+			$memCache{$url} = $meta;
+		}
+		else {
+			$meta = {};
+		}
+	} 
+
+	$meta->{cover} ||= Plugins::Phishin::Plugin->_pluginDataFor('icon');
 
 	main::DEBUGLOG && $log->is_debug && $log->debug("Found metadata for $url: " . Data::Dump::dump($meta));
 	return $meta;
@@ -70,6 +87,8 @@ sub setMetadata {
 		tracknum => $track->{position},
 		secs  => (delete $track->{duration}) / 1000,
 	};
+
+	$memCache{$meta->{url}} = $meta;
 
 	$cache->set(CACHE_PREFIX . $meta->{url}, $meta);
 	return $meta;
