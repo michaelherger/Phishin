@@ -15,6 +15,7 @@ use Slim::Utils::Log;
 # use Slim::Utils::Prefs;
 
 use constant API_URL => 'http://phish.in/api/v1/';
+use constant CACHE_TTL => 3600;
 
 my $log = logger('plugin.phishin');
 my $cache = Slim::Utils::Cache->new();
@@ -34,6 +35,20 @@ sub getYear {
 	});
 }
 
+sub getVenues {
+	my ($class, $cb) = @_;
+	_call('/venues', $cb, {
+		sort_attr => 'name'
+	});
+}
+
+sub getVenue {
+	my ($class, $id, $cb) = @_;
+	_call("/venues/$id", $cb, {
+		sort_attr => 'name'
+	});
+}
+
 sub getShow {
 	my ($class, $id, $cb) = @_;
 	_call("/shows/$id", $cb);
@@ -45,6 +60,8 @@ sub _call {
 	# $uri must not have a leading slash
 	$url =~ s/^\///;
 	$url = API_URL . $url;
+
+	$params->{per_page} ||= 9999;
 
 	if ( my @keys = sort keys %{$params}) {
 		my @params;
@@ -95,7 +112,7 @@ sub _call {
 					if ( my $cache_control = $response->headers->header('Cache-Control') ) {
 						my ($ttl) = $cache_control =~ /max-age=(\d+)/;
 
-						$ttl ||= 60;		# XXX - we're going to always cache for a minute, as we often do follow up calls while navigating
+						$ttl ||= CACHE_TTL;		# XXX - we're going to always cache for a while, as we often do follow up calls while navigating
 
 						if ($ttl) {
 							main::INFOLOG && $log->is_info && $log->info("Caching result for $ttl using max-age (" . $response->url . ")");
