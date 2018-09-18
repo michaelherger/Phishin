@@ -8,6 +8,7 @@ use Slim::Utils::Strings qw(string cstring);
 use Slim::Utils::Log;
 
 use Plugins::Phishin::API;
+use Plugins::Phishin::Metadata;
 
 use vars qw($VERSION);
 
@@ -21,6 +22,8 @@ sub initPlugin {
 	my $class = shift;
 
 	$VERSION = $class->_pluginDataFor('version');
+
+	Plugins::Phishin::Metadata->init();
 
 	$class->SUPER::initPlugin(
 		feed   => \&handleFeed,
@@ -113,31 +116,18 @@ sub show {
 	Plugins::Phishin::API->getShow($params->{showId} || $args->{showId}, sub {
 		my ($show) = @_;
 
-		# TODO - cache metadata
-
 		my $items = [ map {
+			my $meta = Plugins::Phishin::Metadata->setMetadata($_, $show);
+
 			{
-				name => $_->{title},
+				name => $meta->{title},
 				type => 'audio',
-				url => $_->{mp3}
+				url  => $meta->{url},
 			}
 		} @{$show->{tracks}} ];
 
 		$cb->({ items => $items });
 	});
-}
-
-sub _pluginDataFor {
-	my $class = shift;
-	my $key   = shift;
-
-	my $pluginData = Slim::Utils::PluginManager->dataForPlugin($class);
-
-	if ($pluginData && ref($pluginData) && $pluginData->{$key}) {
-		return $pluginData->{$key};
-	}
-
-	return undef;
 }
 
 1;
