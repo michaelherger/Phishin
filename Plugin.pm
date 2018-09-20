@@ -335,7 +335,7 @@ sub search {
 						name => $_->{name} . ' - ' . $_->{location},
 						line1 => $_->{name},
 						line2 => $_->{location},
-						type => 'playlist',
+						type => 'link',
 						url => \&venue,
 						passthrough => [{
 							venueId => $_->{id}

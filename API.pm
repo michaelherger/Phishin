@@ -74,7 +74,7 @@ sub _call {
 
 	# $uri must not have a leading slash
 	$url =~ s/^\///;
-	$url = API_URL . $url;
+	$url = API_URL . $url . '.json';
 
 	$params->{per_page} ||= 9999;
 
@@ -114,13 +114,18 @@ sub _call {
 
 			my $result;
 
-			$result = decode_json(
-				$response->content,
-			);
+			if ( $response->headers->content_type =~ /json/i ) {
+				$result = decode_json(
+					$response->content,
+				);
+			}
+			else {
+				$log->error("phish.in didn't return JSON data? " . $response->content);
+			}
 
 			main::DEBUGLOG && $log->is_debug && $log->debug(Data::Dump::dump($result));
 
-			if ($result->{success} && $result->{data}) {
+			if ($result && $result->{success} && $result->{data}) {
 				$result = $result->{data};
 
 				if ( $cache_key ) {
