@@ -29,7 +29,15 @@ sub getYear {
 	my ($class, $year, $cb) = @_;
 
 	# ??? - sorting doesn't work?
-	_call("/years/$year", $cb, {
+	_call("/years/$year", sub {
+		my ($shows) = @_;
+
+		foreach (@$shows) {
+			$cache->set('phishin_show_' . $_->{id}, $_, CACHE_TTL)
+		}
+
+		$cb->($shows);
+	}, {
 		sort_attr => 'date',
 		sort_dir => 'desc'
 	});
@@ -61,6 +69,14 @@ sub getSong {
 
 sub getShow {
 	my ($class, $id, $cb) = @_;
+
+	if ( my $cached = $cache->get('phishin_show_' . $id) ) {
+		main::INFOLOG && $log->is_info && $log->info("Returning cached data for show $id");
+		main::DEBUGLOG && $log->is_debug && $log->debug(Data::Dump::dump($cached));
+		$cb->($cached);
+		return;
+	}
+
 	_call("/shows/$id", $cb);
 }
 
