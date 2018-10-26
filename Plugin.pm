@@ -106,9 +106,9 @@ sub eras {
 		my ($eras) = @_;
 
 		my $items = [];
-		foreach my $era ( sort { $b->[0] <=> $a->[0] } @$eras ) {
+		foreach my $era ( sort { $b <=> $a } keys %$eras ) {
 			push @$items, {
-				name => cstring($client, 'PLUGIN_PHISHIN_ERA', $era->[0]),
+				name => cstring($client, 'PLUGIN_PHISHIN_ERA', $era),
 				type => 'outline',
 				items => [ map {
 					{
@@ -118,7 +118,7 @@ sub eras {
 							year => $_
 						}],
 					}
-				} reverse @{$era->[1]} ]
+				} reverse @{$eras->{$era}} ]
 			}
 		}
 
