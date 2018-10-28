@@ -1,7 +1,5 @@
-PLUGIN_PHISHIN
+﻿PLUGIN_PHISHIN
 	EN	phish.in'
-	NL	phish.in'
-	FR	phish.in'
 
 PLUGIN_PHISHIN_DESC
 	EN	phish.in' gives you access to Live Phish Audio Streams
