@@ -84,6 +84,10 @@ sub handleFeed {
 			type => 'link',
 			url  => \&songs,
 		},{
+			name => cstring($client, 'PLUGIN_PHISHIN_PLACES'),
+			type => 'link',
+			url  => \&venuesByPlaces,
+		},{
 			name => cstring($client, 'PLUGIN_PHISHIN_SEARCH'),
 			type => 'search',
 			url  => \&search,
@@ -130,9 +134,9 @@ sub year {
 
 		my $items = [ map {
 			{
-				name => $_->{date} . ' - ' . $_->{venue_name} . ' - ' . $_->{location},
-				line1 => $_->{date} . ' - ' . $_->{venue_name},
-				line2 => $_->{location},
+				name => $_->{date} . ' - ' . $_->{venue}->{name} . ' - ' . $_->{venue}->{location},
+				line1 => $_->{date} . ' - ' . $_->{venue}->{name},
+				line2 => $_->{venue}->{location},
 				type => 'playlist',
 				url => \&show,
 				passthrough => [{
@@ -151,43 +155,100 @@ sub venues {
 	Plugins::Phishin::API->getVenues(sub {
 		my ($venues) = @_;
 
-		my $items = [];
-
-		my $indexList = [];
-		my $indexLetter;
-		my $count = 0;
-
-		foreach (@$venues) {
-			next unless $_->{shows_count};
-
-			my $textkey = uc(substr($_->{name} || '', 0, 1));
-
-			if ( defined $indexLetter && $indexLetter ne ($textkey || '') ) {
-				push @$indexList, [$indexLetter, $count];
-				$count = 0;
-			}
-
-			$count++;
-			$indexLetter = $textkey;
-
-			push @$items, {
-				name => $_->{name} . ' - ' . $_->{location},
-				line1 => $_->{name},
-				line2 => $_->{location},
-				type => 'link',
-				textkey => $textkey,
-				url => \&venue,
-				passthrough => [{
-					venueId => $_->{id}
-				}]
-			}
-		}
-
-		push @$indexList, [$indexLetter, $count];
+		my ($items, $indexList) = _renderVenues($venues);
 
 		$cb->({
 			items     => $items,
 			indexList => $indexList
+		});
+	});
+}
+
+sub _renderVenues {
+	my ($venues) = @_;
+
+	my $items = [];
+	my $indexList = [];
+	my $indexLetter;
+	my $count = 0;
+
+	foreach (@$venues) {
+		next unless $_->{shows_count};
+
+		my $textkey = uc(substr($_->{name} || '', 0, 1));
+
+		if ( defined $indexLetter && $indexLetter ne ($textkey || '') ) {
+			push @$indexList, [$indexLetter, $count];
+			$count = 0;
+		}
+
+		$count++;
+		$indexLetter = $textkey;
+
+		push @$items, {
+			name => $_->{name} . ' - ' . $_->{location},
+			line1 => $_->{name},
+			line2 => join(', ', grep { $_ } ($_->{city}, $_->{state}, $_->{country})),
+			type => 'link',
+			textkey => $textkey,
+			url => \&venue,
+			passthrough => [{
+				venueId => $_->{id}
+			}]
+		}
+	}
+
+	push @$indexList, [$indexLetter, $count];
+
+	return wantarray ? ($items, $indexList) : $items;
+}
+
+sub venuesByPlaces {
+	my ($client, $cb, $params, $args) = @_;
+
+	Plugins::Phishin::API->getVenues(sub {
+		my ($venues) = @_;
+
+		my %venues;
+		my %noState;
+		foreach (@$venues) {
+			my $country = $_->{country} ||= 'USA';
+			$country    = 'USA' if $country eq 'US';
+			my $state   = $_->{state};
+
+			$noState{$country}++ unless $state;
+			$venues{$country} ||= {};
+			$venues{$country}->{$state} ||= [];
+			push @{$venues{$country}->{$state}}, $_;
+		}
+
+		my $items = [];
+
+		foreach my $country (sort keys %venues) {
+			my $subItems = [];
+
+			if ($noState{$country}) {
+				$subItems = _renderVenues($venues{$country}->{''});
+			}
+			else {
+				$subItems = [ map {
+					{
+						name => $_,
+						type => 'outline',
+						items => _renderVenues($venues{$country}->{$_})
+					}
+				} sort { lc($a) cmp lc($b) } keys %{$venues{$country}} ]
+			}
+
+			push @$items, {
+				name => $country,
+				type => 'outline',
+				items => $subItems
+			};
+		}
+
+		$cb->({
+			items => $items,
 		});
 	});
 }
