@@ -1,37 +1,44 @@
-﻿PLUGIN_PHISHIN
+PLUGIN_PHISHIN
 	EN	phish.in'
 
 PLUGIN_PHISHIN_DESC
+	DE	phish.in' gibt dir Zugriff auf Live Phish Aufnahmen
 	EN	phish.in' gives you access to Live Phish Audio Streams
 	NL	phish.in' geeft toegang tot Live Phish Audio Streams
 	FR	phish.in' vous donne accès à des flux Audio Live de Phish
 
 PLUGIN_PHISHIN_YEARS
+	DE	Jahre
 	EN	Years
 	NL	Jaren
 	FR	Années
 
 PLUGIN_PHISHIN_ERA
+	DE	%s Ära
 	EN	%s Era
 	NL	%s Tijdperk
 	FR	%s Ères
 
 PLUGIN_PHISHIN_VENUES
+	DE	Lokale
 	EN	Venues
 	NL	Locaties
 	FR	Salles
 
 PLUGIN_PHISHIN_SONGS
+	DE	Lieder
 	EN	Songs
 	NL	Songs
 	FR	Chansons
 
 PLUGIN_PHISHIN_PLACES
+	DE	Orte
 	EN	Places
 	NL	Plaatsen
 	FR	Endroits
 
 PLUGIN_PHISHIN_SEARCH
+	DE	Suche
 	EN	Search
 	NL	Zoeken
 	FR	Recherche
