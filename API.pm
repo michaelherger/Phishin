@@ -4,15 +4,10 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use JSON::XS::VersionOneAndTwo;
-# use List::Util qw(min max);
-# use POSIX qw(strftime);
-# use Tie::Cache::LRU::Expires;
-# use URI::Escape qw(uri_escape_utf8);
 
 use Slim::Networking::SimpleAsyncHTTP;
 use Slim::Utils::Cache;
 use Slim::Utils::Log;
-# use Slim::Utils::Prefs;
 
 use constant API_URL => 'http://phish.in/api/v1/';
 use constant CACHE_TTL => 3600;
@@ -173,7 +168,7 @@ sub _call {
 		},
 	);
 
-	$http->get($url);
+	$http->get($url, 'Authorization' => 'Bearer ' . Plugins::Phishin::Plugin->_pluginDataFor('id2'));
 }
 
 1;
