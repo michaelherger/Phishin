@@ -40,7 +40,16 @@ sub getYear {
 
 sub getVenues {
 	my ($class, $cb) = @_;
-	_call('/venues', $cb, {
+	_call('/venues', sub {
+		# unfortunately sorting seems broken - let's do it ourselves
+		my $venues = [
+			sort {
+				$a->{slug} cmp $b->{slug}
+			} @{shift || []}
+		];
+
+		$cb->($venues, @_);
+	},{
 		sort_attr => 'name'
 	});
 }
@@ -52,7 +61,16 @@ sub getVenue {
 
 sub getSongs {
 	my ($class, $cb) = @_;
-	_call('/songs', $cb, {
+	_call('/songs', sub {
+		# unfortunately sorting seems broken - let's do it ourselves
+		my $songs = [
+			sort {
+				$a->{slug} cmp $b->{slug}
+			} @{shift || []}
+		];
+
+		$cb->($songs, @_);
+	},{
 		sort_attr => 'title'
 	});
 }
