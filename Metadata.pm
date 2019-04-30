@@ -88,6 +88,8 @@ sub setMetadata {
 		secs  => (delete $track->{duration}) / 1000,
 	};
 
+	$meta->{duration} = $meta->{secs};
+
 	$memCache{$meta->{url}} = $meta;
 
 	$cache->set(CACHE_PREFIX . $meta->{url}, $meta);
