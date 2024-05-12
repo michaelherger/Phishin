@@ -9,6 +9,7 @@
 	<id2>214657d10f3bc3e377fcb3a27bd454f7c92e30b0e51eb1ef28b6eb9db6ec6817338d46a1569dbaa38624667f294817f0</id2>
 	<module>Plugins::Phishin::Plugin</module>
 	<icon>plugins/Phishin/html/icon.png</icon>
+	<category>musicservices</category>
 	<targetApplication>
 		<id>SqueezeCenter</id>
 		<maxVersion>*</maxVersion>
