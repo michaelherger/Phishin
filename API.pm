@@ -3,7 +3,7 @@ package Plugins::Phishin::API;
 use strict;
 
 use Digest::MD5 qw(md5_hex);
-use JSON::XS::VersionOneAndTwo;
+use JSON::XS qw(decode_json);
 
 use Slim::Networking::SimpleAsyncHTTP;
 use Slim::Utils::Cache;
